@@ -26,7 +26,6 @@ app.add_middleware(
 # 2. FORCE CUSTOM INJECTION MIDDLEWARE FOR NGROK AND CORS BYPASS
 @app.middleware("http")
 async def add_custom_headers(request: Request, call_next):
-    # Handle preflight OPTIONS requests directly
     if request.method == "OPTIONS":
         response = JSONResponse(content="OK")
     else:
@@ -94,8 +93,15 @@ def download_and_push_worker(magnet_link: str):
         source_dir = f"/tmp/downloads/{target_folder}"
         dest_dir = f"mygdrive:CodespaceDownloads/{target_folder}"
         
-        # Added --use-mmap flag for smoother performance with large files on Linux
-        rclone_cmd = ["rclone", "move", source_dir, dest_dir, "--transfers", "4", "-P", "--stats", "1s", "--use-mmap"]
+        # 🔥 UPGRADED CONFIGURATION BLOCK: Added 8 parallel multi-thread lanes for maximum network velocity
+        rclone_cmd = [
+            "rclone", "move", source_dir, dest_dir, 
+            "--transfers", "4", 
+            "--multi-thread-streams", "8", 
+            "-P", 
+            "--stats", "1s", 
+            "--use-mmap"
+        ]
         
         process = subprocess.Popen(
             rclone_cmd, 
@@ -105,7 +111,6 @@ def download_and_push_worker(magnet_link: str):
             bufsize=1
         )
         
-        # FIXED REGEX: Captures rclone progression strings adaptively across single/multi-file setups
         progress_regex = re.compile(r"Transferred:\s+.*?\s+/\s+.*?,\s*(\d+)%")
         speed_regex = re.compile(r"Transferred:\s+.*?,\s*[\d.]+\s*[\w/]+,\s*([0-9.]+\s*[\w/]+)")
         eta_regex = re.compile(r"ETA\s+([\w\d\s:]+)")
@@ -116,7 +121,6 @@ def download_and_push_worker(magnet_link: str):
                 break
                 
             if line:
-                # Debug logging inside container to track pure strings
                 print(f"RCLONE OUT: {line.strip()}", flush=True)
                 
                 prog_match = progress_regex.search(line)
@@ -145,20 +149,23 @@ def download_and_push_worker(magnet_link: str):
         engine_status["upload_eta"] = "0s"
         print("Upload finished perfectly. UI synchronization window open.")
         
-        # Leave a 30-second window for your UI to register 100% before system execution termination
         time.sleep(30)
         is_pipeline_active = False
-        
-        # REMOVED API SHUTDOWN CALL: Handed off entirely to start_service.sh to prevent early execution termination crashes
         sys.exit(0)
     else:
         engine_status["status"] = "❌ Rclone transfer execution failure."
         is_pipeline_active = False
         print("Upload failed. Keeping instance online for log troubleshooting.")
         
-    # FIXED: Reads key securely from the environment context 
+    # 🔑 FIXED: Reads the token securely from the environment context instead of hardcoding it!
     GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")  
-    CODESPACE_NAME = "scaling-disco-q7x46v96gvxfjrj"
+    
+    if not GITHUB_TOKEN:
+        print("⚠️ Warning: GITHUB_TOKEN environment variable is not set.")
+    
+    # Smart URL Extractor
+    full_url = "https://effective-space-funicular-5v7rrpv7w6pf4v7v.github.dev/"
+    CODESPACE_NAME = full_url.replace("https://", "").split(".")[0]
     
     shutdown_url = f"https://api.github.com/user/codespaces/{CODESPACE_NAME}/stop"
     headers = {
