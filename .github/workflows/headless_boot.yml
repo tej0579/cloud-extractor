@@ -7,6 +7,11 @@ on:
 jobs:
   run-service:
     runs-on: ubuntu-latest
+    
+    # 🔥 FIX: Unlock permissions for the runner to execute GH CLI Codespace operations
+    permissions:
+      codespaces: write
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +29,6 @@ jobs:
           done
 
           echo "2. Navigating to workspace and launching start_service..."
-          # Target directory updated to your new repo folder layout
           gh codespace ssh -c effective-space-funicular-5v7rrpv7w6pf4v7v -- "cd /workspaces/cloud-extractor && chmod +x start_service.sh && bash start_service.sh"
           
       - name: Dump Remote Logs on Failure
