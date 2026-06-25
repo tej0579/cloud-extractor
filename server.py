@@ -157,19 +157,20 @@ def download_and_push_worker(magnet_link: str):
         print(f"Subprocess wrapper failed: {str(e)}")
         exit_code = -1
         
+    # ⚡ NEW SHUTDOWN PATH: Kill the server cleanly so the bash script can finish
     if exit_code == 0:
         engine_status["status"] = "Success! Content securely saved in Google Drive."
         engine_status["upload_progress"] = "100"
         engine_status["upload_speed"] = "0 B/s"
         engine_status["upload_eta"] = "0s"
-        print("Upload finished perfectly. UI synchronization window open.")
+        print("Upload finished perfectly. Handing control back to shell...")
         
-        # Leave a 10-second window for your UI to register 100% before system execution termination
+        # Give your frontend UI 10 seconds to catch the final 100% status frame
         time.sleep(10)
         is_pipeline_active = False
         
-        # ⚡ FIXED COMPLETION SHUTDOWN SEQUENCE: Triggers native linux poweroff to cleanly terminate instance without python crash traces
-        os.system("sudo poweroff")
+        # This cleanly kills the web server, which tells the start_service loop to break!
+        os.system("pkill -f uvicorn")
         return
     else:
         engine_status["status"] = "❌ Rclone transfer execution failure."
