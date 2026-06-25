@@ -13,7 +13,7 @@ jobs:
 
       - name: Poll and Launch Service
         env:
-          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           echo "1. Checking SSH Connection..."
           for i in {1..30}; do
