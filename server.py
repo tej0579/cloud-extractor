@@ -26,6 +26,7 @@ app.add_middleware(
 # 2. FORCE CUSTOM INJECTION MIDDLEWARE FOR NGROK AND CORS BYPASS
 @app.middleware("http")
 async def add_custom_headers(request: Request, call_next):
+    # Handle preflight OPTIONS requests directly
     if request.method == "OPTIONS":
         response = JSONResponse(content="OK")
     else:
@@ -102,15 +103,17 @@ def download_and_push_worker(magnet_link: str):
         else:
             dest_dir = f"mygdrive:CodespaceDownloads/{target_folder}"
         
-        # 🔥 FIX 3: Optimized stats interval line configurations for realtime progress mapping
+        # Added --use-mmap flag for smoother performance with large files on Linux
+        # 🔥 FIX 3: Pointing explicitly to the live rclone config file path inside the container environment
         rclone_cmd = [
             "rclone", "copy", source_dir, dest_dir, 
             "--config", "/home/codespace/.config/rclone/rclone.conf",
             "--transfers", "4", 
             "--multi-thread-streams", "8", 
+            "-P", 
             "--stats", "500ms", 
-            "--stats-one-line",
-            "--buffer-size", "32M"
+            "--stats-one-line", 
+            "--use-mmap"
         ]
         
         process = subprocess.Popen(
@@ -121,6 +124,7 @@ def download_and_push_worker(magnet_link: str):
             bufsize=1
         )
         
+        # FIXED REGEX: Captures rclone progression strings adaptively across single/multi-file setups
         progress_regex = re.compile(r"(\d{1,3})%")
         speed_regex = re.compile(r"(\d+(?:\.\d+)?\s*[KMG]?i?B/s)")
         eta_regex = re.compile(r"ETA\s+([a-zA-Z0-9:-]+)")
@@ -131,6 +135,7 @@ def download_and_push_worker(magnet_link: str):
                 break
                 
             if line:
+                # Debug logging inside container to track pure strings
                 print(f"RCLONE OUT: {line.strip()}", flush=True)
                 
                 prog_match = progress_regex.search(line)
@@ -151,21 +156,19 @@ def download_and_push_worker(magnet_link: str):
     except Exception as e:
         print(f"Subprocess wrapper failed: {str(e)}")
         exit_code = -1
-    
-    # ⚡ FOOLPROOF FIX: Replaced complex API with native Linux poweroff!
+        
     if exit_code == 0:
         engine_status["status"] = "Success! Content securely saved in Google Drive."
         engine_status["upload_progress"] = "100"
         engine_status["upload_speed"] = "0 B/s"
         engine_status["upload_eta"] = "0s"
-        print("Upload finished perfectly. Terminating cloud instance cleanly...")
+        print("Upload finished perfectly. UI synchronization window open.")
         
-        # Give your frontend UI 10 seconds to catch the final 100% status frame
+        # Leave a 10-second window for your UI to register 100% before system execution termination
         time.sleep(10)
-        
         is_pipeline_active = False
         
-        # This shuts down the entire container natively, drops the workflow, and turns the green dot grey!
+        # ⚡ FIXED COMPLETION SHUTDOWN SEQUENCE: Triggers native linux poweroff to cleanly terminate instance without python crash traces
         os.system("sudo poweroff")
         return
     else:
