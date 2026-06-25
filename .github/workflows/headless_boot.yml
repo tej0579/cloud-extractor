@@ -12,6 +12,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Poll and Launch Service
+        id: launch
+        continue-on-error: true   # 🌟 Prevents SSH disconnects from killing the job
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
@@ -26,9 +28,13 @@ jobs:
           done
 
           echo "2. Navigating to workspace and launching start_service..."
-          # The Action will wait here patiently until start_service.sh finishes and says 'exit 0'
           gh codespace ssh -c effective-space-funicular-5v7rrpv7w6pf4v7v -- "cd /workspaces/cloud-extractor && chmod +x start_service.sh && bash start_service.sh"
-          
+
+      - name: Stop Codespace (Always Runs)
+        if: always()   # 🌟 GUARANTEES THIS RUNS NO MATTER WHAT
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          export GH_TOKEN="${{ secrets.GH_TOKEN }}"
           echo "3. Pipeline finished! Stopping Codespace from the outside..."
-          # THIS is what officially tells GitHub's dashboard to turn the instance off!
-          gh codespace stop -c effective-space-funicular-5v7rrpv7w6pf4v7v
+          gh codespace stop -c effective-space-funicular-5v7rrpv7w6pf4v7v || true
