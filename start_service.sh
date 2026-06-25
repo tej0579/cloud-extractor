@@ -95,7 +95,12 @@ done
 # 🛑 AUTOMATED SELF-DESTRUCT / CLOSING SEQUENCE
 # =========================================================
 echo "Upload complete! Sending termination signals to environment..."
-cd /workspaces/cloud-extractor
+echo "Closing connection and shutting down this Codespace instance."
 
-# ✅ UPDATED: Replaced native PID killing sequence with explicit targeted GH codespace stop sequence
-gh codespace stop -c effective-space-funicular-5v7rrpv7w6pf4v7v
+# ✅ FIXED: Use the token passed explicitly from the runner context environment
+if [ -n "$GH_TOKEN" ]; then
+    gh codespace stop -c effective-space-funicular-5v7rrpv7w6pf4v7v
+else
+    echo "GH_TOKEN not available. Cascading fallback to system poweroff..."
+    sudo poweroff
+fi
