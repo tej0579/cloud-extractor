@@ -13,7 +13,7 @@ jobs:
 
       - name: Poll and Launch Service
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: |
           echo "1. Checking SSH Connection..."
           for i in {1..30}; do
@@ -24,13 +24,13 @@ jobs:
           done
 
           echo "2. Navigating to workspace and launching start_service..."
-          # FIXED: Target directory and codespace name updated to your new configuration
+          # ✅ UPDATED: Navigating to cloud-extractor and using the active codespace target link
           gh codespace ssh -c effective-space-funicular-5v7rrpv7w6pf4v7v -- "cd /workspaces/cloud-extractor && chmod +x start_service.sh && bash start_service.sh"
           
       - name: Dump Remote Logs on Failure
         if: always()
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: |
           echo "=== SERVER LOG ==="
           gh codespace ssh -c effective-space-funicular-5v7rrpv7w6pf4v7v -- "cat /tmp/server.log || true"
