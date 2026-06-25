@@ -7,11 +7,6 @@ on:
 jobs:
   run-service:
     runs-on: ubuntu-latest
-    
-    # 🔒 FIXED: Correct YAML indentation for permissions block
-    permissions:
-      codespaces: write
-      contents: read
 
     steps:
       - uses: actions/checkout@v4
