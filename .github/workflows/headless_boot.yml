@@ -7,12 +7,18 @@ on:
 jobs:
   run-service:
     runs-on: ubuntu-latest
+    
+    # 🔒 OBLIGATORY FOR GH CLI: Grants the runner system permission to manage Codespaces
+    permissions:
+      codespaces: write
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Poll and Launch Service
         env:
+          # Changed to match the exact secret name in your repo settings
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           echo "1. Checking SSH Connection..."
@@ -24,7 +30,6 @@ jobs:
           done
 
           echo "2. Navigating to workspace and launching start_service..."
-          # FIXED: Explicitly changing directory to the repository folder before running the script
           gh codespace ssh -c effective-space-funicular-5v7rrpv7w6pf4v7v -- "cd /workspaces/cloud-extractor && chmod +x start_service.sh && bash start_service.sh"
           
       - name: Dump Remote Logs on Failure
