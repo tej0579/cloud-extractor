@@ -89,27 +89,28 @@ def download_and_push_worker(magnet_link: str):
         engine_status["speed"] = "0.00"
         engine_status["progress"] = "100.00"
         
-        # 🔥 FIX 1: Safely release the file lock so Rclone can read/copy it
+        # 🔥 FIX 1: Safely release the file lock so Rclone can read/copy it cleanly
         ses.remove_torrent(handle)
         time.sleep(2)
         
         target_folder = engine_status["name"]
         source_dir = f"/tmp/downloads/{target_folder}"
         
-        # 🔥 FIX 2: Handle Single File vs Folder routing for Google Drive
+        # 🔥 FIX 2: Handle Single File vs Folder routing configurations for Google Drive
         if os.path.isfile(source_dir):
             dest_dir = "mygdrive:CodespaceDownloads"
         else:
             dest_dir = f"mygdrive:CodespaceDownloads/{target_folder}"
         
-        # 🔥 FIX 3: Bulletproof configuration & clean regex logging
+        # 🔥 FIX 3: Optimized stats interval line configurations for realtime progress mapping
         rclone_cmd = [
             "rclone", "copy", source_dir, dest_dir, 
             "--config", "/home/codespace/.config/rclone/rclone.conf",
             "--transfers", "4", 
             "--multi-thread-streams", "8", 
-            "--stats", "1s", 
-            "--stats-one-line"
+            "--stats", "500ms", 
+            "--stats-one-line",
+            "--buffer-size", "32M"
         ]
         
         process = subprocess.Popen(
@@ -151,41 +152,45 @@ def download_and_push_worker(magnet_link: str):
         print(f"Subprocess wrapper failed: {str(e)}")
         exit_code = -1
     
+    # 🔥 FIX 4: Correctly indented completion block with secret-scanning bypass logic
     if exit_code == 0:
         engine_status["status"] = "Success! Content securely saved in Google Drive."
         engine_status["upload_progress"] = "100"
         engine_status["upload_speed"] = "0 B/s"
         engine_status["upload_eta"] = "0s"
-        print("Upload finished perfectly. UI synchronization window open.")
+        print("Upload finished perfectly. Triggering automated cloud shutdown sequence...")
         
-        time.sleep(30)
+        # Synchronize UI frame windows clean closing state
+        time.sleep(15)
+        
+        # Pull environment token safely or resolve via active CLI authentication profile wrapper
+        GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+        if not GITHUB_TOKEN:
+            try:
+                GITHUB_TOKEN = subprocess.check_output(["gh", "auth", "token"], text=True).strip()
+            except Exception:
+                GITHUB_TOKEN = None
+                
+        full_url = "https://effective-space-funicular-5v7rrpv7w6pf4v7v.github.dev/"
+        CODESPACE_NAME = full_url.replace("https://", "").split(".")[0]
+        
+        shutdown_url = f"https://api.github.com/user/codespaces/{CODESPACE_NAME}/stop"
+        headers = {
+            "Authorization": f"Bearer {GITHUB_TOKEN}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28"
+        }
+        
         is_pipeline_active = False
-        sys.exit(0)
+        try:
+            requests.post(shutdown_url, headers=headers)
+        except Exception as shutdown_err:
+            print(f"API Shutdown dispatch failed: {str(shutdown_err)}")
+            sys.exit(0)
     else:
         engine_status["status"] = "❌ Rclone transfer execution failure."
         is_pipeline_active = False
         print("Upload failed. Keeping instance online for log troubleshooting.")
-        # 🔥 FIX 4: Actually halt execution here so it doesn't auto-destruct, letting you read the logs!
-        return 
-        
-    GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")  
-    
-    if not GITHUB_TOKEN:
-        print("⚠️ Warning: GITHUB_TOKEN environment variable is not set.")
-    
-    full_url = "https://effective-space-funicular-5v7rrpv7w6pf4v7v.github.dev/"
-    CODESPACE_NAME = full_url.replace("https://", "").split(".")[0]
-    
-    shutdown_url = f"https://api.github.com/user/codespaces/{CODESPACE_NAME}/stop"
-    headers = {
-        "Authorization": f"Bearer {GITHUB_TOKEN}",
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28"
-    }
-    
-    time.sleep(10)
-    is_pipeline_active = False
-    requests.post(shutdown_url, headers=headers)
 
 @app.post("/api/v1/enqueue")
 def enqueue_link(background_tasks: BackgroundTasks, magnet_link: str = Form(...)):
