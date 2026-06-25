@@ -8,7 +8,6 @@ jobs:
   run-service:
     runs-on: ubuntu-latest
     
-    # 🔒 OBLIGATORY FOR GH CLI: Grants the runner system permission to manage Codespaces
     permissions:
       codespaces: write
       contents: read
@@ -18,7 +17,6 @@ jobs:
 
       - name: Poll and Launch Service
         env:
-          # Changed to match the exact secret name in your repo settings
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           echo "1. Checking SSH Connection..."
