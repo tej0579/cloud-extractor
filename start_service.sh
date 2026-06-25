@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
 
-# 📁 1. UPDATE TARGET DIRECTORY TO YOUR NEW REPOSITORY LAYOUT
 cd /workspaces/cloud-extractor
 
 echo "Cleaning up older workers..."
@@ -9,14 +8,12 @@ pkill -f uvicorn || true
 pkill -f ngrok || true
 sleep 2
 
-echo "Launching Uvicorn server layer with system environment tokens..."
-# Injected env parsing to ensure os.getenv("GITHUB_TOKEN") extracts perfectly inside server.py
-export GITHUB_TOKEN="${GH_TOKEN:-$GITHUB_TOKEN}"
+echo "Launching Uvicorn server layer..."
 nohup python3 -m uvicorn server:app --host 0.0.0.0 --port 5000 > /tmp/server.log 2>&1 &
 
 echo "Waiting for port 5000 socket binding..."
 for i in {1..30}; do
-    if ss -tulpn | grep ':5000' > /dev/null; then
+    if ss -tulpn | grep ':5000'; then
         echo "SUCCESS: Port 5000 is open!"
         break
     fi
