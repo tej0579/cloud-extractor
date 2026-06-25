@@ -1,3 +1,4 @@
+cat << 'EOF' > .github/workflows/headless_boot.yml
 name: Headless Extraction Pipeline Booter
 
 on:
@@ -8,6 +9,7 @@ jobs:
   run-service:
     runs-on: ubuntu-latest
     
+    # ✅ FIXED INDENTATION: Aligned perfectly at the job level
     permissions:
       codespaces: write
       contents: read
@@ -41,3 +43,4 @@ jobs:
           gh codespace ssh -c effective-space-funicular-5v7rrpv7w6pf4v7v -- "cat /tmp/ngrok.log || true"
           echo "=== LIVE PROCESSES ==="
           gh codespace ssh -c effective-space-funicular-5v7rrpv7w6pf4v7v -- "ps aux | grep -E 'uvicorn|ngrok' | grep -v grep || true"
+EOF
