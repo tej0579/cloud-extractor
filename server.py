@@ -325,6 +325,11 @@ def download_and_push_worker(magnet_link: str):
         speed_regex = re.compile(r"(\d+(?:\.\d+)?\s*[KMG]?i?B/s)")
         eta_regex = re.compile(r"ETA\s+([a-zA-Z0-9:-]+)")
 
+        # 🔥 ULTRA-STRICT REGEX: Only captures strings that explicitly end in a speed unit suffix
+        progress_regex = re.compile(r"(\d{1,3})%")
+        speed_regex = re.compile(r"(\d+(?:\.\d+)?\s*[KMG]?i?B/s)")
+        eta_regex = re.compile(r"ETA\s+([a-zA-Z0-9:-]+)")
+
         while True:
             line = process.stdout.readline()
             if not line and process.poll() is not None:
@@ -337,10 +342,10 @@ def download_and_push_worker(magnet_link: str):
                 if prog_match:
                     engine_status["upload_progress"] = prog_match.group(1)
                 
-                # 🔥 FIXED: Uses findall() to strictly grab the final total overall speed on the line
-                speed_matches = speed_regex.findall(line)
-                if speed_matches:
-                    engine_status["upload_speed"] = speed_matches[-1] 
+                # 🔥 FIXED: Explicitly captures ONLY the match containing the speed suffix /s
+                speed_match = speed_regex.search(line)
+                if speed_match:
+                    engine_status["upload_speed"] = speed_match.group(1) 
                 
                 eta_match = eta_regex.search(line)
                 if eta_match:
