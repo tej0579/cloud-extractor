@@ -95,11 +95,7 @@ done
 # 🛑 AUTOMATED SELF-DESTRUCT / CLOSING SEQUENCE
 # =========================================================
 echo "Upload complete! Sending termination signals to environment..."
-pkill -f ngrok || true
-
-echo "Closing connection and shutting down this Codespace instance."
-# ✅ UPDATED: Exporting local environment variable token to authorize the native GitHub CLI tool
-export GH_TOKEN=$(cat /workspaces/cloud-extractor/.github/workflows/main.yml | grep "GH_TOKEN:" | head -n 1 | awk '{print $2}' | sed 's/[{}$]//g') 2>/dev/null || export GH_TOKEN="$GITHUB_TOKEN"
+cd /workspaces/cloud-extractor
 
 # ✅ UPDATED: Replaced native PID killing sequence with explicit targeted GH codespace stop sequence
 gh codespace stop -c effective-space-funicular-5v7rrpv7w6pf4v7v
