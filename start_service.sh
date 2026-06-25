@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+# ✅ UPDATED: Pointing to your current active workspace repository
 cd /workspaces/cloud-extractor
 
 echo "Cleaning up older workers..."
