@@ -152,41 +152,22 @@ def download_and_push_worker(magnet_link: str):
         print(f"Subprocess wrapper failed: {str(e)}")
         exit_code = -1
     
-    # 🔥 FIX 4: Correctly indented completion block with secret-scanning bypass logic
+    # ⚡ FOOLPROOF FIX: Replaced complex API with native Linux poweroff!
     if exit_code == 0:
         engine_status["status"] = "Success! Content securely saved in Google Drive."
         engine_status["upload_progress"] = "100"
         engine_status["upload_speed"] = "0 B/s"
         engine_status["upload_eta"] = "0s"
-        print("Upload finished perfectly. Triggering automated cloud shutdown sequence...")
+        print("Upload finished perfectly. Terminating cloud instance cleanly...")
         
-        # Synchronize UI frame windows clean closing state
-        time.sleep(15)
-        
-        # Pull environment token safely or resolve via active CLI authentication profile wrapper
-        GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-        if not GITHUB_TOKEN:
-            try:
-                GITHUB_TOKEN = subprocess.check_output(["gh", "auth", "token"], text=True).strip()
-            except Exception:
-                GITHUB_TOKEN = None
-                
-        full_url = "https://effective-space-funicular-5v7rrpv7w6pf4v7v.github.dev/"
-        CODESPACE_NAME = full_url.replace("https://", "").split(".")[0]
-        
-        shutdown_url = f"https://api.github.com/user/codespaces/{CODESPACE_NAME}/stop"
-        headers = {
-            "Authorization": f"Bearer {GITHUB_TOKEN}",
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28"
-        }
+        # Give your frontend UI 10 seconds to catch the final 100% status frame
+        time.sleep(10)
         
         is_pipeline_active = False
-        try:
-            requests.post(shutdown_url, headers=headers)
-        except Exception as shutdown_err:
-            print(f"API Shutdown dispatch failed: {str(shutdown_err)}")
-            sys.exit(0)
+        
+        # This shuts down the entire container natively, drops the workflow, and turns the green dot grey!
+        os.system("sudo poweroff")
+        return
     else:
         engine_status["status"] = "❌ Rclone transfer execution failure."
         is_pipeline_active = False
