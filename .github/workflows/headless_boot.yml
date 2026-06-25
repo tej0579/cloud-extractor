@@ -15,26 +15,20 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
+          export GH_TOKEN="${{ secrets.GH_TOKEN }}"
+          
           echo "1. Checking SSH Connection..."
           for i in {1..30}; do
-            if gh codespace ssh -c effective-space-funicular-5v7rrpv7w6pf4v7v -- "echo SSH_READY"; then
+            if gh codespace ssh -c effective-space-funicular-5v7rrpv7w6pf4v7v -- "echo SSH_READY" 2>/dev/null; then
               break
             fi
             sleep 5
           done
 
           echo "2. Navigating to workspace and launching start_service..."
-          # ✅ FIXED: Forwarding your authenticated token into the script shell wrapper context
-          gh codespace ssh -c effective-space-funicular-5v7rrpv7w6pf4v7v -- "export GH_TOKEN='${{ secrets.GH_TOKEN }}' && cd /workspaces/cloud-extractor && chmod +x start_service.sh && bash start_service.sh"
+          # The Action will wait here patiently until start_service.sh finishes and says 'exit 0'
+          gh codespace ssh -c effective-space-funicular-5v7rrpv7w6pf4v7v -- "cd /workspaces/cloud-extractor && chmod +x start_service.sh && bash start_service.sh"
           
-      - name: Dump Remote Logs on Failure
-        if: always()
-        env:
-          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-        run: |
-          echo "=== SERVER LOG ==="
-          gh codespace ssh -c effective-space-funicular-5v7rrpv7w6pf4v7v -- "cat /tmp/server.log || true"
-          echo "=== NGROK LOG ==="
-          gh codespace ssh -c effective-space-funicular-5v7rrpv7w6pf4v7v -- "cat /tmp/ngrok.log || true"
-          echo "=== LIVE PROCESSES ==="
-          gh codespace ssh -c effective-space-funicular-5v7rrpv7w6pf4v7v -- "ps aux | grep -E 'uvicorn|ngrok' | grep -v grep || true"
+          echo "3. Pipeline finished! Stopping Codespace from the outside..."
+          # THIS is what officially tells GitHub's dashboard to turn the instance off!
+          gh codespace stop -c effective-space-funicular-5v7rrpv7w6pf4v7v
