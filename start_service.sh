@@ -92,8 +92,11 @@ while true; do
 done
 
 # =========================================================
-# 🛑 AUTOMATED CLOSING SEQUENCE
+# 🛑 AUTOMATED CLOSING SEQUENCE & CRASH LOGGING
 # =========================================================
+echo "----- Last 50 lines of server.log (Checking Uvicorn exit status) -----"
+tail -n 50 /tmp/server.log || true
+
 echo "Upload complete! Python server detached. Sending termination signals..."
 pkill -f ngrok || true
 
