@@ -92,15 +92,10 @@ while true; do
 done
 
 # =========================================================
-# 🛑 AUTOMATED SELF-DESTRUCT / CLOSING SEQUENCE
+# 🛑 AUTOMATED CLOSING SEQUENCE
 # =========================================================
-echo "Upload complete! Sending termination signals to environment..."
-echo "Closing connection and shutting down this Codespace instance."
+echo "Upload complete! Python server detached. Sending termination signals..."
+pkill -f ngrok || true
 
-# ✅ FIXED: Use the token passed explicitly from the runner context environment
-if [ -n "$GH_TOKEN" ]; then
-    gh codespace stop -c effective-space-funicular-5v7rrpv7w6pf4v7v
-else
-    echo "GH_TOKEN not available. Cascading fallback to system poweroff..."
-    sudo poweroff
-fi
+echo "Closing connection cleanly. Handing control back to GitHub Actions..."
+exit 0
