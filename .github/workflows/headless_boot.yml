@@ -1,4 +1,3 @@
-cat << 'EOF' > .github/workflows/headless_boot.yml
 name: Headless Extraction Pipeline Booter
 
 on:
@@ -9,7 +8,7 @@ jobs:
   run-service:
     runs-on: ubuntu-latest
     
-    # ✅ FIXED INDENTATION: Aligned perfectly at the job level
+    # 🔒 FIXED: Correct YAML indentation for permissions block
     permissions:
       codespaces: write
       contents: read
@@ -30,6 +29,7 @@ jobs:
           done
 
           echo "2. Navigating to workspace and launching start_service..."
+          # FIXED: Target directory and codespace name updated to your new configuration
           gh codespace ssh -c effective-space-funicular-5v7rrpv7w6pf4v7v -- "cd /workspaces/cloud-extractor && chmod +x start_service.sh && bash start_service.sh"
           
       - name: Dump Remote Logs on Failure
@@ -43,4 +43,3 @@ jobs:
           gh codespace ssh -c effective-space-funicular-5v7rrpv7w6pf4v7v -- "cat /tmp/ngrok.log || true"
           echo "=== LIVE PROCESSES ==="
           gh codespace ssh -c effective-space-funicular-5v7rrpv7w6pf4v7v -- "ps aux | grep -E 'uvicorn|ngrok' | grep -v grep || true"
-EOF
