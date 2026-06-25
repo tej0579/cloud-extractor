@@ -89,18 +89,27 @@ def download_and_push_worker(magnet_link: str):
         engine_status["speed"] = "0.00"
         engine_status["progress"] = "100.00"
         
+        # 🔥 FIX 1: Safely release the file lock so Rclone can read/copy it
+        ses.remove_torrent(handle)
+        time.sleep(2)
+        
         target_folder = engine_status["name"]
         source_dir = f"/tmp/downloads/{target_folder}"
-        dest_dir = f"mygdrive:CodespaceDownloads/{target_folder}"
         
-        # 🔥 UPGRADED CONFIGURATION BLOCK: Added 8 parallel multi-thread lanes for maximum network velocity
+        # 🔥 FIX 2: Handle Single File vs Folder routing for Google Drive
+        if os.path.isfile(source_dir):
+            dest_dir = "mygdrive:CodespaceDownloads"
+        else:
+            dest_dir = f"mygdrive:CodespaceDownloads/{target_folder}"
+        
+        # 🔥 FIX 3: Bulletproof configuration & clean regex logging
         rclone_cmd = [
-            "rclone", "move", source_dir, dest_dir, 
+            "rclone", "copy", source_dir, dest_dir, 
+            "--config", "/home/codespace/.config/rclone/rclone.conf",
             "--transfers", "4", 
             "--multi-thread-streams", "8", 
-            "-P", 
             "--stats", "1s", 
-            "--use-mmap"
+            "--stats-one-line"
         ]
         
         process = subprocess.Popen(
@@ -111,9 +120,9 @@ def download_and_push_worker(magnet_link: str):
             bufsize=1
         )
         
-        progress_regex = re.compile(r"Transferred:\s+.*?\s+/\s+.*?,\s*(\d+)%")
-        speed_regex = re.compile(r"Transferred:\s+.*?,\s*[\d.]+\s*[\w/]+,\s*([0-9.]+\s*[\w/]+)")
-        eta_regex = re.compile(r"ETA\s+([\w\d\s:]+)")
+        progress_regex = re.compile(r"(\d{1,3})%")
+        speed_regex = re.compile(r"(\d+(?:\.\d+)?\s*[KMG]?i?B/s)")
+        eta_regex = re.compile(r"ETA\s+([a-zA-Z0-9:-]+)")
 
         while True:
             line = process.stdout.readline()
@@ -156,14 +165,14 @@ def download_and_push_worker(magnet_link: str):
         engine_status["status"] = "❌ Rclone transfer execution failure."
         is_pipeline_active = False
         print("Upload failed. Keeping instance online for log troubleshooting.")
+        # 🔥 FIX 4: Actually halt execution here so it doesn't auto-destruct, letting you read the logs!
+        return 
         
-    # 🔑 FIXED: Reads the token securely from the environment context instead of hardcoding it!
     GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")  
     
     if not GITHUB_TOKEN:
         print("⚠️ Warning: GITHUB_TOKEN environment variable is not set.")
     
-    # Smart URL Extractor
     full_url = "https://effective-space-funicular-5v7rrpv7w6pf4v7v.github.dev/"
     CODESPACE_NAME = full_url.replace("https://", "").split(".")[0]
     
